@@ -1,0 +1,82 @@
+---
+title: "R Packages"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    source_code: embed
+---
+  
+```{r setup, include=FALSE}
+# Install package from GitHub
+# devtools::install_github("metacran/crandb", force = TRUE)
+
+# load packages
+library(tidyverse)
+library(DT)
+library(crandb)
+
+# Create Database
+dd <- data_frame(crandb = list_packages(format="latest", limit=15000)) %>% 
+  mutate(Package        = crandb %>% map_chr('Package', .null=NA_character_),
+         length         = crandb %>% map_int(length),
+         Title          = crandb %>% map_chr('Title', .null=NA_character_),
+         Version        = crandb %>% map_chr('Version', .null=NA_character_),
+         Author         = NA,
+         Maintainer     = NA,
+         Description    = crandb %>% map_chr('Description', .null=NA_character_),
+         URL            = crandb %>% map_chr('URL', .null=NA_character_),
+         BugReports     = NA,
+         Depends        = NA,
+         Suggests       = NA,
+         Licence        = crandb %>% map_chr('License', .null=NA_character_),
+         CRAN           = paste0('<a href="','https://CRAN.R-project.org/package=',Package,'">',Package,'</a>'),
+         Published      = crandb %>% map_chr('Date/Publication', .null=NA_character_))
+```
+
+CRAN Packages
+===================================== 
+
+```{r}
+dd %>% 
+  select(CRAN, Title, Description) %>% 
+  datatable(rownames=FALSE,
+            escape = FALSE,
+            style='bootstrap',
+            #selection='single',
+            class='compact stripe hover row-border order-column',
+            extensions = c('Buttons','KeyTable'),
+            options= list(dom = 'Bfrtip', buttons = I('colvis'),
+                          keys = TRUE,
+                          autoWidth = TRUE,
+                          columnDefs = list(list(width = '200px', targets = '_all')),
+                          searching = TRUE, searchHighlight = TRUE,
+                          pageLength = 100, paging = TRUE,  info=TRUE))
+```
+
+Archived Packages
+===================================== 
+
+Recent Activity
+=====================================
+```{r}
+ed <- data_frame(events = events(1000)) %>% 
+  mutate(name = events %>% map_chr('name', .null=NA_character_),
+         date = events %>% map_chr('date', .null=NA_character_),
+         event = events %>% map_chr('event', .null=NA_character_),
+         title = events %>% map_chr(~.x$package[['Title']]))
+
+ed %>% 
+  select(-events) %>% 
+  datatable(rownames=FALSE,
+            escape = FALSE,
+            style='bootstrap',
+            #selection='single',
+            class='compact stripe hover row-border order-column',
+            extensions = c('Buttons','KeyTable'),
+            options= list(dom = 'Bfrtip', buttons = I('colvis'),
+                          keys = TRUE,
+                          autoWidth = TRUE,
+                          columnDefs = list(list(width = '200px', targets = '_all')),
+                          searching = TRUE, searchHighlight = TRUE,
+                          pageLength = 25, paging = TRUE,  info=TRUE))
+```
